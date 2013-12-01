@@ -46,14 +46,15 @@ class SyncBot(Tox):
         self.joined = False
 
         try:
+            self.add_friend(GROUP_BOT, "")
+        except: pass
+
+        try:
             while True:
                 status = self.isconnected()
                 if not checked and status:
                     print('Connected to DHT.')
                     checked = True
-                    try:
-                        self.add_friend(GROUP_BOT, "")
-                    except: pass
 
                 if checked and not status:
                     print('Disconnected from DHT.')
