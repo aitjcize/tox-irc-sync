@@ -79,7 +79,7 @@ class SyncBot(Tox):
                                 CHANNEL, line, re.S)
                         if rx:
                             msg = '%s> %s' % rx.groups()
-                            print 'IRC> %s' % msg
+                            print('IRC> %s' % msg)
                             self.sent = msg
 
                             if self.tox_group_id != None:
