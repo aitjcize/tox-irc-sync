@@ -45,7 +45,6 @@ class SyncBot(Tox):
         checked = False
         self.joined = False
 
-        count = 0
         try:
             while True:
                 status = self.isconnected()
