@@ -62,8 +62,8 @@ class SyncBot(Tox):
                     checked = False
 
                 if not self.joined:
-                    tid = self.get_friend_id(GROUP_BOT)
                     try:
+                        tid = self.get_friend_id(GROUP_BOT)
                         self.send_message(tid, 'invite')
                     except: pass
 
@@ -84,6 +84,10 @@ class SyncBot(Tox):
 
                             if self.tox_group_id != None:
                                 self.group_message_send(self.tox_group_id, msg)
+
+                        l = line.rstrip().split()
+                        if l[0] == "PING":
+                           self.irc.send("PONG %s\r\n" % l[1])
 
                 self.do()
         except KeyboardInterrupt:
