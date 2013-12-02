@@ -79,12 +79,9 @@ class SyncBot(Tox):
                         rx = re.match(r':(.*?)!.*? PRIVMSG %s :(.*?)\r' %
                                 CHANNEL, line, re.S)
                         if rx:
+                            print('IRC> %s: %s' % rx.groups())
                             msg = '%s> %s' % rx.groups()
-                            print('IRC> %s' % msg)
-                            self.sent = msg
-
-                            if self.tox_group_id != None:
-                                self.group_message_send(self.tox_group_id, msg)
+                            self.send_group_msg(msg)
 
                         l = line.rstrip().split()
                         if l[0] == "PING":
@@ -93,6 +90,18 @@ class SyncBot(Tox):
                 self.do()
         except KeyboardInterrupt:
             self.save_to_file('data')
+
+    def send_group_msg(self, msg):
+        self.sent = msg
+        if self.tox_group_id != None:
+            sent = False
+            while not sent:
+                try:
+                    self.group_message_send(self.tox_group_id, msg)
+                    sent = True
+                except:
+                    self.do()
+                    sleep(0.02)
 
     def on_group_invite(self, friendid, pk):
         if not self.joined:
