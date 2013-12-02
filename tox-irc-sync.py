@@ -16,7 +16,7 @@ IRC_HOST = "irc.freenode.net"
 IRC_PORT = 6667
 NAME = NICK = IDENT = REALNAME = "SyncBot"
 
-CHANNEL = '#tox-dev'
+CHANNEL = '#tox-ontopic'
 
 class SyncBot(Tox):
     def __init__(self):
@@ -25,6 +25,7 @@ class SyncBot(Tox):
 
         self.connect()
         self.set_name("SyncBot")
+        self.set_status_message("Send me a message with the word 'invite'")
         print('ID: %s' % self.get_address())
 
         self.readbuffer = ""
@@ -93,11 +94,6 @@ class SyncBot(Tox):
         except KeyboardInterrupt:
             self.save_to_file('data')
 
-    def on_friend_request(self, pk, message):
-        print('Friend request from %s: %s' % (pk, message))
-        self.add_friend_norequest(pk)
-        print('Accepted.')
-
     def on_group_invite(self, friendid, pk):
         if not self.joined:
             self.joined = True
@@ -109,6 +105,15 @@ class SyncBot(Tox):
             name = self.group_peername(groupnumber, friendgroupnumber)
             print('TOX> %s: %s' % (name, message))
             self.irc.send('PRIVMSG %s :%s> %s\r\n' % (CHANNEL, name, message))
+
+    def on_friend_request(self, pk, message):
+        print('Friend request from %s: %s' % (pk, message))
+        self.add_friend_norequest(pk)
+        print('Accepted.')
+
+    def on_friend_message(self, friendid, message):
+        if message == 'invite':
+            self.invite_friend(friendid, self.tox_group_id)
 
 t = SyncBot()
 t.loop()
