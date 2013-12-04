@@ -81,7 +81,12 @@ class SyncBot(Tox):
                         if rx:
                             print('IRC> %s: %s' % rx.groups())
                             msg = '%s> %s' % rx.groups()
-                            self.send_group_msg(msg)
+
+                            if rx.group(2) == '^syncbot':
+                                self.irc.send('PRIVMSG %s :%s\r\n' %
+                                        (CHANNEL, self.get_address()))
+                            else:
+                                self.send_group_msg(msg)
 
                         l = line.rstrip().split()
                         if l[0] == "PING":
