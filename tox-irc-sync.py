@@ -68,7 +68,7 @@ class SyncBot(Tox):
                         self.send_message(tid, 'invite')
                     except: pass
 
-                readable, _, _ = select.select([self.irc], [], [], 0.02)
+                readable, _, _ = select.select([self.irc], [], [], 0.01)
 
                 if readable:
                     self.readbuffer += self.irc.recv(4096)
