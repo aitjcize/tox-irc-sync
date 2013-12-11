@@ -44,13 +44,12 @@ class SyncBot(Tox):
 
     def ensure_exe(self, func, args):
         count = 0
-        THRESHOLD = 10
+        THRESHOLD = 50
 
         while True:
             try:
                 return func(*args)
             except:
-                print func, count
                 assert count < THRESHOLD
                 count += 1
                 for i in range(10):
@@ -60,6 +59,7 @@ class SyncBot(Tox):
     def loop(self):
         checked = False
         self.joined = False
+        self.request = False
 
         try:
             while True:
@@ -67,8 +67,11 @@ class SyncBot(Tox):
                 if not checked and status:
                     print('Connected to DHT.')
                     checked = True
-                    self.ensure_exe(self.add_friend, (GROUP_BOT, ""))
-                    self.bid = self.get_friend_id(GROUP_BOT)
+                    try:
+                        self.bid = self.get_friend_id(GROUP_BOT)
+                    except:
+                        self.ensure_exe(self.add_friend, (GROUP_BOT, "Hi"))
+                        self.bid = self.get_friend_id(GROUP_BOT)
 
                 if checked and not status:
                     print('Disconnected from DHT.')
@@ -105,9 +108,11 @@ class SyncBot(Tox):
             self.save_to_file('data')
 
     def on_connection_status(self, friendId, status):
-        if not self.joined and friendId == self.bid and status:
+        if not self.request and not self.joined \
+                and friendId == self.bid and status:
             print('Groupbot online, trying to join group chat.')
-            self.ensure_exe(self.send_message, (tid, 'invite'))
+            self.request = True
+            self.ensure_exe(self.send_message, (self.bid, 'invite'))
 
     def on_group_invite(self, friendid, pk):
         if not self.joined:
