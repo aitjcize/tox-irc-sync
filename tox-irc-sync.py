@@ -98,6 +98,7 @@ class SyncBot(Tox):
                             elif self.tox_group_id != None:
                                 self.ensure_exe(self.group_message_send,
                                         (self.tox_group_id, msg))
+                                self.sent = msg
 
                         l = line.rstrip().split()
                         if l[0] == "PING":
