@@ -96,9 +96,9 @@ class SyncBot(Tox):
                                 self.irc.send('PRIVMSG %s :%s\r\n' %
                                         (CHANNEL, self.get_address()))
                             elif self.tox_group_id != None:
+                                self.sent = msg
                                 self.ensure_exe(self.group_message_send,
                                         (self.tox_group_id, msg))
-                                self.sent = msg
 
                         l = line.rstrip().split()
                         if l[0] == "PING":
