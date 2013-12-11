@@ -40,15 +40,26 @@ class SyncBot(Tox):
 
     def connect(self):
         print('connecting...')
-        self.bootstrap_from_address(SERVER[0], 0, SERVER[1], SERVER[2])
+        self.bootstrap_from_address(SERVER[0], 1, SERVER[1], SERVER[2])
+
+    def ensure_exe(self, func, args):
+        count = 0
+        THRESHOLD = 10
+
+        while True:
+            try:
+                return func(*args)
+            except:
+                print func, count
+                assert count < THRESHOLD
+                count += 1
+                for i in range(10):
+                    self.do()
+                    sleep(0.02)
 
     def loop(self):
         checked = False
         self.joined = False
-
-        try:
-            self.add_friend(GROUP_BOT, "")
-        except: pass
 
         try:
             while True:
@@ -56,17 +67,13 @@ class SyncBot(Tox):
                 if not checked and status:
                     print('Connected to DHT.')
                     checked = True
+                    self.ensure_exe(self.add_friend, (GROUP_BOT, ""))
+                    self.bid = self.get_friend_id(GROUP_BOT)
 
                 if checked and not status:
                     print('Disconnected from DHT.')
                     self.connect()
                     checked = False
-
-                if not self.joined:
-                    try:
-                        tid = self.get_friend_id(GROUP_BOT)
-                        self.send_message(tid, 'invite')
-                    except: pass
 
                 readable, _, _ = select.select([self.irc], [], [], 0.01)
 
@@ -85,8 +92,9 @@ class SyncBot(Tox):
                             if rx.group(2) == '^syncbot':
                                 self.irc.send('PRIVMSG %s :%s\r\n' %
                                         (CHANNEL, self.get_address()))
-                            else:
-                                self.send_group_msg(msg)
+                            elif self.tox_group_id != None:
+                                self.ensure_exe(self.group_message_send,
+                                        (self.tox_group_id, msg))
 
                         l = line.rstrip().split()
                         if l[0] == "PING":
@@ -96,17 +104,10 @@ class SyncBot(Tox):
         except KeyboardInterrupt:
             self.save_to_file('data')
 
-    def send_group_msg(self, msg):
-        self.sent = msg
-        if self.tox_group_id != None:
-            sent = False
-            while not sent:
-                try:
-                    self.group_message_send(self.tox_group_id, msg)
-                    sent = True
-                except:
-                    self.do()
-                    sleep(0.02)
+    def on_connection_status(self, friendId, status):
+        if not self.joined and friendId == self.bid and status:
+            print('Groupbot online, trying to join group chat.')
+            self.ensure_exe(self.send_message, (tid, 'invite'))
 
     def on_group_invite(self, friendid, pk):
         if not self.joined:
