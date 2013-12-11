@@ -128,6 +128,7 @@ class SyncBot(Tox):
 
     def on_friend_message(self, friendid, message):
         if message == 'invite':
+            print('Inviting %s' % self.get_name(friendid))
             self.invite_friend(friendid, self.tox_group_id)
 
 t = SyncBot()
