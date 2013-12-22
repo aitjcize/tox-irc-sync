@@ -91,10 +91,17 @@ class SyncBot(Tox):
                         if rx:
                             print('IRC> %s: %s' % rx.groups())
                             msg = '%s> %s' % rx.groups()
+                            content = rx.group(2)
 
-                            if rx.group(2) == '^syncbot':
+                            if content == '^syncbot':
                                 self.irc.send('PRIVMSG %s :%s\r\n' %
                                         (CHANNEL, self.get_address()))
+                            elif content[1:].startswith('ACTION '):
+                                action = '%s> %s' % (rx.group(1),
+                                        rx.group(2)[8:-1])
+                                self.sent = action
+                                self.ensure_exe(self.group_action_send,
+                                        (self.tox_group_id, action))
                             elif self.tox_group_id != None:
                                 self.sent = msg
                                 self.ensure_exe(self.group_message_send,
@@ -126,6 +133,13 @@ class SyncBot(Tox):
             name = self.group_peername(groupnumber, friendgroupnumber)
             print('TOX> %s: %s' % (name, message))
             self.irc.send('PRIVMSG %s :%s> %s\r\n' % (CHANNEL, name, message))
+
+    def on_group_action(self, groupnumber, friendgroupnumber, action):
+        if action != self.sent:
+            name = self.group_peername(groupnumber, friendgroupnumber)
+            print('TOX> %s: %s' % (name, action))
+            self.irc.send('PRIVMSG %s :\x01ACTION %s> %s\x01\r\n' %
+                    (CHANNEL, name, action))
 
     def on_friend_request(self, pk, message):
         print('Friend request from %s: %s' % (pk, message))
