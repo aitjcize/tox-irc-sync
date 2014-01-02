@@ -93,7 +93,8 @@ class SyncBot(Tox):
                             msg = '%s> %s' % rx.groups()
                             content = rx.group(2)
 
-                            if content == '^syncbot':
+                            if content == '^syncbot' or \
+                                    content == '^echobot':
                                 self.irc.send('PRIVMSG %s :%s\r\n' %
                                         (CHANNEL, self.get_address()))
                             elif content[1:].startswith('ACTION '):
@@ -150,6 +151,8 @@ class SyncBot(Tox):
         if message == 'invite':
             print('Inviting %s' % self.get_name(friendid))
             self.invite_friend(friendid, self.tox_group_id)
+        else:
+            self.ensure_exe(self.send_message, (friendid, message))
 
 t = SyncBot()
 t.loop()
