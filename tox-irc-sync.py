@@ -32,6 +32,9 @@ class SyncBot(Tox):
         self.sent = None
         self.tox_group_id = None
 
+        self.irc_init()
+
+    def irc_init(self):
         self.irc = socket.socket()
         self.irc.connect((IRC_HOST, IRC_PORT))
         self.irc.send("NICK %s\r\n" % NICK)
@@ -95,7 +98,7 @@ class SyncBot(Tox):
 
                             if content == '^syncbot' or \
                                     content == '^echobot':
-                                self.irc.send('PRIVMSG %s :%s\r\n' %
+                                self.irc_send('PRIVMSG %s :%s\r\n' %
                                         (CHANNEL, self.get_address()))
                             elif content[1:].startswith('ACTION '):
                                 action = '%s> %s' % (rx.group(1),
@@ -110,11 +113,22 @@ class SyncBot(Tox):
 
                         l = line.rstrip().split()
                         if l[0] == "PING":
-                           self.irc.send("PONG %s\r\n" % l[1])
+                           self.irc_send("PONG %s\r\n" % l[1])
 
                 self.do()
         except KeyboardInterrupt:
             self.save_to_file('data')
+
+    def irc_send(self, msg):
+        success = False
+        while not success:
+            try:
+                self.irc.send(msg)
+                success = True
+                break
+            except socket.error:
+                self.irc_init()
+                sleep(1)
 
     def on_connection_status(self, friendId, status):
         if not self.request and not self.joined \
@@ -133,13 +147,13 @@ class SyncBot(Tox):
         if message != self.sent:
             name = self.group_peername(groupnumber, friendgroupnumber)
             print('TOX> %s: %s' % (name, message))
-            self.irc.send('PRIVMSG %s :%s> %s\r\n' % (CHANNEL, name, message))
+            self.irc_send('PRIVMSG %s :%s> %s\r\n' % (CHANNEL, name, message))
 
     def on_group_action(self, groupnumber, friendgroupnumber, action):
         if action != self.sent:
             name = self.group_peername(groupnumber, friendgroupnumber)
             print('TOX> %s: %s' % (name, action))
-            self.irc.send('PRIVMSG %s :\x01ACTION %s> %s\x01\r\n' %
+            self.irc_send('PRIVMSG %s :\x01ACTION %s> %s\x01\r\n' %
                     (CHANNEL, name, action))
 
     def on_friend_request(self, pk, message):
