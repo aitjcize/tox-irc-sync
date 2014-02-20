@@ -150,7 +150,11 @@ class SyncBot(Tox):
             if message.startswith('>'):
                 message = ('\x039%s\x03' % message)
             print('TOX> %s: %s' % (name, message))
-            self.irc_send('PRIVMSG %s :[%s]: %s\r\n' % (CHANNEL, name, message))
+            if message.startswith('^'):
+                self.irc_send('PRIVMSG %s :%s\r\n' % (CHANNEL, message))
+            else:
+                self.irc_send('PRIVMSG %s :[%s]: %s\r\n' %
+                              (CHANNEL, name, message))
 
     def on_group_action(self, groupnumber, friendgroupnumber, action):
         if action != self.sent:
