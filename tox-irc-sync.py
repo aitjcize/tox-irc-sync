@@ -92,7 +92,7 @@ class SyncBot(Tox):
                                 CHANNEL, line, re.S)
                         if rx:
                             print('IRC> %s: %s' % rx.groups())
-                            msg = '%s> %s' % rx.groups()
+                            msg = '[%s]: %s' % rx.groups()
                             content = rx.group(2)
 
                             if content == '^syncbot' or \
@@ -100,7 +100,7 @@ class SyncBot(Tox):
                                 self.irc_send('PRIVMSG %s :%s\r\n' %
                                         (CHANNEL, self.get_address()))
                             elif content[1:].startswith('ACTION '):
-                                action = '%s> %s' % (rx.group(1),
+                                action = '[%s]: %s' % (rx.group(1),
                                         rx.group(2)[8:-1])
                                 self.sent = action
                                 self.ensure_exe(self.group_action_send,
@@ -148,17 +148,17 @@ class SyncBot(Tox):
         if message != self.sent:
             name = self.group_peername(groupnumber, friendgroupnumber)
             if message.startswith('>'):
-                message = ('\0039%s\003' % message)
+                message = ('\x039%s\x03' % message)
             print('TOX> %s: %s' % (name, message))
-            self.irc_send('PRIVMSG %s :%s> %s\r\n' % (CHANNEL, name, message))
+            self.irc_send('PRIVMSG %s :[%s]: %s\r\n' % (CHANNEL, name, message))
 
     def on_group_action(self, groupnumber, friendgroupnumber, action):
         if action != self.sent:
             name = self.group_peername(groupnumber, friendgroupnumber)
             if action.startswith('>'):
-                action = ('\0039%s\003' % action)
+                action = ('\x039%s\x03' % action)
             print('TOX> %s: %s' % (name, action))
-            self.irc_send('PRIVMSG %s :\x01ACTION %s> %s\x01\r\n' %
+            self.irc_send('PRIVMSG %s :\x01ACTION [%s]: %s\x01\r\n' %
                     (CHANNEL, name, action))
 
     def on_friend_request(self, pk, message):
