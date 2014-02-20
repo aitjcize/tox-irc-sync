@@ -3,6 +3,7 @@ import socket
 import string
 import select
 import re
+import pickle
 
 from tox import Tox
 
@@ -37,7 +38,8 @@ class SyncBot(Tox):
         self.memory = {}
 
         if exists(MEMORY_DB):
-            self.memory = pickle.load(MEMORY_DB)
+            with open(MEMORY_DB, 'r') as f:
+                self.memory = pickle.load(f)
 
     def irc_init(self):
         self.irc = socket.socket()
@@ -191,7 +193,8 @@ class SyncBot(Tox):
             subject = args[0]
             desc = ' '.join(args[1:])
             self.memory[subject] = desc
-            pickle.dump(self.memory, MEMORY_DB)
+            with open(MEMORY_DB, 'w') as f:
+                pickle.dump(self.memory, f)
             self.send_both('Remembering ^%s: %s' % (subject, desc))
         elif self.memory.has_key(cmd):
             self.send_both(self.memory[cmd])
