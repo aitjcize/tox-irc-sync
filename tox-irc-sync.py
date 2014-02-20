@@ -152,7 +152,7 @@ class SyncBot(Tox):
         if name != NAME:
             print('TOX> %s: %s' % (name, message))
             if message.startswith('>'):
-                message = '\x0309%s\03' % message
+                message = '\x0309%s\x03' % message
             if message.startswith('^'):
                 self.irc_send('PRIVMSG %s :%s\r\n' % (CHANNEL, message))
                 self.handle_command(message)
@@ -165,7 +165,7 @@ class SyncBot(Tox):
         if name != NAME:
             print('TOX> %s: %s' % (name, action))
             if action.startswith('>'):
-                action = '\x0309%s\03' % action
+                action = '\x0309%s\x03' % action
             self.irc_send('PRIVMSG %s :\x01ACTION [%s]: %s\x01\r\n' %
                     (CHANNEL, name, action))
 
