@@ -148,7 +148,7 @@ class SyncBot(Tox):
             print('TOX> %s: %s' % (name, message))
             if message.startswith('^'):
                 self.irc_send('PRIVMSG %s :%s\r\n' % (CHANNEL, message))
-                self.handle_command(cmd)
+                self.handle_command(message)
             else:
                 self.irc_send('PRIVMSG %s :[%s]: %s\r\n' %
                               (CHANNEL, name, message))
@@ -176,6 +176,7 @@ class SyncBot(Tox):
         if cmd[1:] in ['syncbot', 'echobot']:
             self.ensure_exe(self.group_message_send,
                     (self.tox_group_id, self.get_address()))
+            self.sent = self.get_address()
             self.irc_send('PRIVMSG %s :%s\r\n' %
                     (CHANNEL, self.get_address()))
 
