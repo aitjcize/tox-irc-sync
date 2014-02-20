@@ -17,6 +17,7 @@ IRC_PORT = 6667
 NAME = NICK = IDENT = REALNAME = "SyncBot"
 
 CHANNEL = '#tox-ontopic'
+MEMORY_DB = 'memory.pickle'
 
 class SyncBot(Tox):
     def __init__(self):
@@ -33,6 +34,10 @@ class SyncBot(Tox):
         self.tox_group_id = None
 
         self.irc_init()
+        self.memory = {}
+
+        if exists(MEMORY_DB):
+            self.memory = pickle.load(MEMORY_DB)
 
     def irc_init(self):
         self.irc = socket.socket()
@@ -172,13 +177,25 @@ class SyncBot(Tox):
         else:
             self.ensure_exe(self.send_message, (friendid, message))
 
+    def send_both(self, content):
+        self.sent = content
+        self.ensure_exe(self.group_message_send, (self.tox_group_id, content))
+        self.irc_send('PRIVMSG %s :%s\r\n' % (CHANNEL, content))
+
     def handle_command(self, cmd):
-        if cmd[1:] in ['syncbot', 'echobot']:
-            self.ensure_exe(self.group_message_send,
-                    (self.tox_group_id, self.get_address()))
-            self.sent = self.get_address()
-            self.irc_send('PRIVMSG %s :%s\r\n' %
-                    (CHANNEL, self.get_address()))
+        cmd = cmd[1:]
+        if cmd in ['syncbot', 'echobot']:
+            self.send_both(self.get_address())
+        elif cmd.startswith('remember '):
+            args = cmd[9:].split(' ')
+            subject = args[0]
+            desc = ' '.join(args[1:])
+            self.memory[subject] = desc
+            pickle.dump(self.memory, MEMORY_DB)
+            self.send_both('Remembering ^%s: %s' % (subject, desc))
+        elif self.memory.has_key(cmd):
+            self.send_both(self.memory[cmd])
+
 
 t = SyncBot()
 t.loop()
