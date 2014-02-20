@@ -99,6 +99,8 @@ class SyncBot(Tox):
                                     content == '^echobot':
                                 self.irc_send('PRIVMSG %s :%s\r\n' %
                                         (CHANNEL, self.get_address()))
+                                self.ensure_exe(self.group_message_send,
+                                        (self.tox_group_id, self.get_address()))
                             elif content[1:].startswith('ACTION '):
                                 action = '[%s]: %s' % (rx.group(1),
                                         rx.group(2)[8:-1])
