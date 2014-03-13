@@ -175,10 +175,14 @@ class SyncBot(Tox):
 
     def on_friend_message(self, friendid, message):
         if message == 'invite':
-            print('Inviting %s' % self.get_name(friendid))
-            self.invite_friend(friendid, self.tox_group_id)
-        else:
-            self.ensure_exe(self.send_message, (friendid, message))
+            if not self.tox_group_id is None:
+                print('Inviting %s' % self.get_name(friendid))
+                self.invite_friend(friendid, self.tox_group_id)
+                return
+            else:
+                message = 'Waiting for GroupBot, please try again in 1 min.'
+
+        self.ensure_exe(self.send_message, (friendid, message))
 
     def send_both(self, content):
         self.ensure_exe(self.group_message_send, (self.tox_group_id, content))
@@ -188,6 +192,8 @@ class SyncBot(Tox):
         cmd = cmd[1:]
         if cmd in ['syncbot', 'echobot']:
             self.send_both(self.get_address())
+        elif cmd == 'resync':
+            sys.exit(0)
         elif cmd.startswith('remember '):
             args = cmd[9:].split(' ')
             subject = args[0]
