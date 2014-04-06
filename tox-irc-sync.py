@@ -149,7 +149,7 @@ class SyncBot(Tox):
 
     def on_group_message(self, groupnumber, friendgroupnumber, message):
         name = self.group_peername(groupnumber, friendgroupnumber)
-        if name != NAME:
+        if len(name) and name != NAME:
             print('TOX> %s: %s' % (name, message))
             if message.startswith('>'):
                 message = '\x0309%s\x03' % message
@@ -161,7 +161,7 @@ class SyncBot(Tox):
 
     def on_group_action(self, groupnumber, friendgroupnumber, action):
         name = self.group_peername(groupnumber, friendgroupnumber)
-        if name != NAME:
+        if len(name) and name != NAME:
             print('TOX> %s: %s' % (name, action))
             if action.startswith('>'):
                 action = '\x0309%s\x03' % action
