@@ -5,10 +5,11 @@ import select
 import re
 import pickle
 
-from tox import Tox
+from tox import Tox, ToxAV
 
 from time import sleep
 from os.path import exists
+from threading import Thread
 
 SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
 GROUP_BOT = '56A1ADE4B65B86BCD51CC73E2CD4E542179F47959FE3E0E21B4B0ACDADE5185520B3E6FC5D64'
@@ -20,11 +21,53 @@ NAME = NICK = IDENT = REALNAME = "SyncBot"
 CHANNEL = '#tox-ontopic'
 MEMORY_DB = 'memory.pickle'
 
+class AV(ToxAV):
+    def __init__(self, core, width, height):
+        super(AV, self).__init__(core, width, height)
+        self.core = self.get_tox()
+        self.daemon = True
+        self.stop = True
+
+    def on_invite(self):
+        print 'Incoming call from %s ...' % self.core.get_name(
+                self.get_peer_id(0))
+        self.answer(self.TypeAudio)
+
+    def on_start(self):
+        self.prepare_transmission(False)
+        self.stop = False
+        self.thread = Thread(target=self.transmission)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def on_end(self):
+        self.stop = True
+        self.kill_transmission()
+        self.thread.join()
+        print 'Call ended'
+
+    def on_peer_timeout(self):
+        self.stop_call()
+
+    def transmission(self):
+        print "Starting transmission..."
+
+        while not self.stop:
+            ret = self.recv_audio()
+            if ret:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+                self.send_audio(ret["size"], ret["data"])
+
+            sleep(0.001)
+
+
 class SyncBot(Tox):
     def __init__(self):
         if exists('data'):
             self.load_from_file('data')
 
+        self.av = AV(self, 480, 320)
         self.connect()
         self.set_name("SyncBot")
         self.set_status_message("Send me a message with the word 'invite'")
