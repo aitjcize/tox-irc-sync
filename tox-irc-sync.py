@@ -27,37 +27,75 @@ class AV(ToxAV):
         self.core = self.get_tox()
         self.daemon = True
         self.stop = True
+        self.call_type = self.TypeAudio
 
     def on_invite(self):
-        print 'Incoming call from %s ...' % self.core.get_name(
-                self.get_peer_id(0))
-        self.answer(self.TypeAudio)
+        self.call_type = self.get_peer_transmission_type(0)
+        print("Incoming %s call from %s ..." % (
+                "video" if self.call_type == self.TypeVideo else "audio",
+                self.core.get_name(self.get_peer_id(0))))
+
+        self.answer(self.call_type)
+        print("Answered, in call...")
 
     def on_start(self):
-        self.prepare_transmission(False)
+        self.call_type = self.get_peer_transmission_type(0)
+        self.prepare_transmission(True)
+
         self.stop = False
-        self.thread = Thread(target=self.transmission)
-        self.thread.daemon = True
-        self.thread.start()
+        self.a_thread = Thread(target=self.audio_transmission)
+        self.a_thread.daemon = True
+        self.a_thread.start()
+
+        if self.call_type == self.TypeVideo:
+            self.v_thread = Thread(target=self.video_transmission)
+            self.v_thread.daemon = True
+            self.v_thread.start()
 
     def on_end(self):
         self.stop = True
         self.kill_transmission()
-        self.thread.join()
+        self.a_thread.join()
+
+        if self.call_type == self.TypeVideo:
+            self.v_thread.join()
+
         print 'Call ended'
 
     def on_peer_timeout(self):
         self.stop_call()
 
-    def transmission(self):
-        print "Starting transmission..."
+    def audio_transmission(self):
+        print("Starting audio transmission...")
 
         while not self.stop:
-            ret = self.recv_audio()
-            if ret:
-                sys.stdout.write('.')
-                sys.stdout.flush()
-                self.send_audio(ret["size"], ret["data"])
+            try:
+                ret = self.recv_audio()
+                if ret:
+                    sys.stdout.write('.')
+                    sys.stdout.flush()
+                    self.send_audio(ret["size"], ret["data"])
+            except Exception as e:
+                print(e)
+
+            sleep(0.001)
+
+    def video_transmission(self):
+        print("Starting video transmission...")
+
+        r = g = b = 0
+        ar = ag = ab = 0
+        ar = 1
+
+        while not self.stop:
+            try:
+                vret = self.recv_video()
+                if vret:
+                    sys.stdout.write('*')
+                    sys.stdout.flush()
+                    self.send_video(vret['data'])
+            except Exception as e:
+                print(e)
 
             sleep(0.001)
 
