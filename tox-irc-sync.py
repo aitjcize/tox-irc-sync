@@ -101,7 +101,7 @@ class SyncBot(Tox):
         if exists('data'):
             self.load_from_file('data')
 
-        self.av = AV(self, 480, 320)
+        self.av = AV(self, 640, 480)
         self.connect()
         self.set_name("SyncBot")
         self.set_status_message("Send me a message with the word 'invite'")
