@@ -78,7 +78,7 @@ class AV(ToxAV):
             except Exception as e:
                 print(e)
 
-            sleep(0.001)
+            sleep(0.01)
 
     def video_transmission(self):
         print("Starting video transmission...")
