@@ -22,78 +22,45 @@ CHANNEL = '#tox-ontopic'
 MEMORY_DB = 'memory.pickle'
 
 class AV(ToxAV):
-    def __init__(self, core, width, height):
-        super(AV, self).__init__(core, width, height)
+    def __init__(self, core, max_calls):
         self.core = self.get_tox()
-        self.daemon = True
-        self.stop = True
+        self.cs = None
         self.call_type = self.TypeAudio
 
-    def on_invite(self):
-        self.call_type = self.get_peer_transmission_type(0)
-        print("Incoming %s call from %s ..." % (
-                "video" if self.call_type == self.TypeVideo else "audio",
-                self.core.get_name(self.get_peer_id(0))))
+    def on_invite(self, idx):
+        self.cs = self.get_peer_csettings(idx, 0)
+        self.call_type = self.cs["call_type"]
 
-        self.answer(self.call_type)
+        print("Incoming %s call from %d:%s ..." % (
+                "video" if self.call_type == self.TypeVideo else "audio", idx,
+                self.core.get_name(self.get_peer_id(idx, 0))))
+
+        self.answer(idx, self.call_type)
         print("Answered, in call...")
 
-    def on_start(self):
-        self.call_type = self.get_peer_transmission_type(0)
-        self.prepare_transmission(True)
+    def on_start(self, idx):
+        self.change_settings(idx, {"max_video_width": 1920,
+                                   "max_video_height": 1080})
+        self.prepare_transmission(idx, self.jbufdc * 2, self.VADd,
+                True if self.call_type == self.TypeVideo else False)
 
-        self.stop = False
-        self.a_thread = Thread(target=self.audio_transmission)
-        self.a_thread.daemon = True
-        self.a_thread.start()
-
-        if self.call_type == self.TypeVideo:
-            self.v_thread = Thread(target=self.video_transmission)
-            self.v_thread.daemon = True
-            self.v_thread.start()
-
-    def on_end(self):
-        self.stop = True
+    def on_end(self, idx):
         self.kill_transmission()
-        self.a_thread.join()
 
-        if self.call_type == self.TypeVideo:
-            self.v_thread.join()
+        print('Call ended')
 
-        print 'Call ended'
-
-    def on_peer_timeout(self):
+    def on_peer_timeout(self, idx):
         self.stop_call()
 
-    def audio_transmission(self):
-        print("Starting audio transmission...")
+    def on_audio_data(self, idx, size, data):
+        sys.stdout.write('.')
+        sys.stdout.flush()
+        self.send_audio(idx, size, data)
 
-        while not self.stop:
-            try:
-                ret = self.recv_audio()
-                if ret:
-                    sys.stdout.write('.')
-                    sys.stdout.flush()
-                    self.send_audio(ret["size"], ret["data"])
-            except Exception as e:
-                print(e)
-
-            sleep(0.01)
-
-    def video_transmission(self):
-        print("Starting video transmission...")
-
-        while not self.stop:
-            try:
-                vret = self.recv_video()
-                if vret:
-                    sys.stdout.write('*')
-                    sys.stdout.flush()
-                    self.send_video(vret['data'])
-            except Exception as e:
-                print(e)
-
-            sleep(0.001)
+    def on_video_data(self, idx, width, height, data):
+        sys.stdout.write('*')
+        sys.stdout.flush()
+        self.send_video(idx, width, height, data)
 
 
 class SyncBot(Tox):
@@ -101,7 +68,7 @@ class SyncBot(Tox):
         if exists('data'):
             self.load_from_file('data')
 
-        self.av = AV(self, 640, 480)
+        self.av = AV(self, 10)
         self.connect()
         self.set_name("SyncBot")
         self.set_status_message("Send me a message with the word 'invite'")
