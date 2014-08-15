@@ -11,12 +11,13 @@ from time import sleep
 from os.path import exists
 from threading import Thread
 
-SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
+SERVER = ['54.199.139.199', 33445, '7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029']
 GROUP_BOT = '56A1ADE4B65B86BCD51CC73E2CD4E542179F47959FE3E0E21B4B0ACDADE51855D34D34D37CB5'
+PWD = ''
 
-IRC_HOST = "irc.freenode.net"
+IRC_HOST = 'irc.freenode.net'
 IRC_PORT = 6667
-NAME = NICK = IDENT = REALNAME = "SyncBot"
+NAME = NICK = IDENT = REALNAME = 'SyncBot'
 
 CHANNEL = '#tox-ontopic'
 MEMORY_DB = 'memory.pickle'
@@ -29,18 +30,18 @@ class AV(ToxAV):
 
     def on_invite(self, idx):
         self.cs = self.get_peer_csettings(idx, 0)
-        self.call_type = self.cs["call_type"]
+        self.call_type = self.cs['call_type']
 
-        print("Incoming %s call from %d:%s ..." % (
-                "video" if self.call_type == self.TypeVideo else "audio", idx,
+        print('Incoming %s call from %d:%s ...' % (
+                'video' if self.call_type == self.TypeVideo else 'audio', idx,
                 self.core.get_name(self.get_peer_id(idx, 0))))
 
         self.answer(idx, self.call_type)
-        print("Answered, in call...")
+        print('Answered, in call...')
 
     def on_start(self, idx):
-        self.change_settings(idx, {"max_video_width": 1920,
-                                   "max_video_height": 1080})
+        self.change_settings(idx, {'max_video_width': 1920,
+                                   'max_video_height': 1080})
         self.prepare_transmission(idx, self.jbufdc * 2, self.VADd,
                 True if self.call_type == self.TypeVideo else False)
 
@@ -70,11 +71,11 @@ class SyncBot(Tox):
 
         self.av = AV(self, 10)
         self.connect()
-        self.set_name("SyncBot")
+        self.set_name('SyncBot')
         self.set_status_message("Send me a message with the word 'invite'")
         print('ID: %s' % self.get_address())
 
-        self.readbuffer = ""
+        self.readbuffer = ''
         self.tox_group_id = None
 
         self.irc_init()
@@ -87,8 +88,8 @@ class SyncBot(Tox):
     def irc_init(self):
         self.irc = socket.socket()
         self.irc.connect((IRC_HOST, IRC_PORT))
-        self.irc.send("NICK %s\r\n" % NICK)
-        self.irc.send("USER %s %s bla :%s\r\n" % (IDENT, IRC_HOST, REALNAME))
+        self.irc.send('NICK %s\r\n' % NICK)
+        self.irc.send('USER %s %s bla :%s\r\n' % (IDENT, IRC_HOST, REALNAME))
 
     def connect(self):
         print('connecting...')
@@ -122,7 +123,7 @@ class SyncBot(Tox):
                     try:
                         self.bid = self.get_friend_id(GROUP_BOT)
                     except:
-                        self.ensure_exe(self.add_friend, (GROUP_BOT, "Hi"))
+                        self.ensure_exe(self.add_friend, (GROUP_BOT, 'Hi'))
                         self.bid = self.get_friend_id(GROUP_BOT)
 
                 if checked and not status:
@@ -158,10 +159,12 @@ class SyncBot(Tox):
                                 self.handle_command(content)
 
                         l = line.rstrip().split()
-                        if l[0] == "PING":
-                           self.irc_send("PONG %s\r\n" % l[1])
-                        if l[1] == "376":
-                           self.irc.send("JOIN %s\r\n" % CHANNEL)
+                        if l[0] == 'PING':
+                           self.irc_send('PONG %s\r\n' % l[1])
+                        if l[1] == '376':
+                           self.irc.send('PRIVMSG NickServ :IDENTIFY %s %s\r\n'
+                                   % (NICK, PWD))
+                           self.irc.send('JOIN %s\r\n' % CHANNEL)
 
                 self.do()
         except KeyboardInterrupt:
