@@ -5,7 +5,7 @@ import select
 import re
 import pickle
 
-from tox import Tox, ToxAV
+from pytox import Tox, ToxAV
 
 from time import sleep
 from os.path import exists
