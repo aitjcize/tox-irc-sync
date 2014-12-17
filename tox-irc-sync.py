@@ -63,6 +63,7 @@ class AV(ToxAV):
         sys.stdout.flush()
         self.send_video(idx, width, height, data)
 
+bot_toxname = 'SyncBot'
 
 class SyncBot(Tox):
     def __init__(self):
@@ -71,7 +72,7 @@ class SyncBot(Tox):
 
         self.av = AV(self, 10)
         self.connect()
-        self.set_name('bnwox-sync')
+        self.set_name(bot_toxname)
         self.set_status_message("Send me a message with the word 'invite'")
         print('ID: %s' % self.get_address())
 
