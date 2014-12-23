@@ -63,6 +63,7 @@ class AV(ToxAV):
         sys.stdout.flush()
         self.send_video(idx, width, height, data)
 
+bot_toxname = 'SyncBot'
 
 class SyncBot(Tox):
     def __init__(self):
@@ -71,7 +72,7 @@ class SyncBot(Tox):
 
         self.av = AV(self, 10)
         self.connect()
-        self.set_name('SyncBot')
+        self.set_name(bot_toxname)
         self.set_status_message("Send me a message with the word 'invite'")
         print('ID: %s' % self.get_address())
 
@@ -188,10 +189,10 @@ class SyncBot(Tox):
             self.request = True
             self.ensure_exe(self.send_message, (self.bid, 'invite'))
 
-    def on_group_invite(self, friendid, pk):
+    def on_group_invite(self, friendid, type, data):
         if not self.joined:
             self.joined = True
-            self.tox_group_id = self.join_groupchat(friendid, pk)
+            self.tox_group_id = self.join_groupchat(friendid, data)
             print('Joined groupchat.')
 
     def on_group_message(self, groupnumber, friendgroupnumber, message):
